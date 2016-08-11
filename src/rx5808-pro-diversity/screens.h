@@ -64,9 +64,14 @@ class screens
         // SCREEN SAVER
         void screenSaver(uint8_t channelName, uint16_t channelFrequency, const char *call_sign);
         void screenSaver(uint8_t diversity_mode, uint8_t channelName, uint16_t channelFrequency, const char *call_sign);
+        
         void updateScreenSaver(uint8_t rssi);
         void updateScreenSaver(char active_receiver, uint8_t rssi, uint8_t rssiA, uint8_t rssiB); // diversity
-
+        // dirk
+        void updateScreenSaver(uint8_t rssi, const char *volt);
+        void updateScreenSaver(char active_receiver, uint8_t rssi, uint8_t rssiA, uint8_t rssiB, const char *volt); // diversity
+        // end dirk
+        
         // DIVERSITY
         void diversity(uint8_t diversity_mode);
         void updateDiversity(char active_receiver, uint8_t rssiA, uint8_t rssiB);

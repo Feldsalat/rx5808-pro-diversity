@@ -79,7 +79,7 @@ char screens::begin(const char *call_sign) {
 
 #ifdef USE_BOOT_LOGO
     display.display(); // show splash screen
-    delay(3000);
+    delay(1000);
 #endif
     // init done
     reset();
@@ -113,7 +113,7 @@ char screens::begin(const char *call_sign) {
     display.setTextSize(2);
     display.print(call_sign);
     display.display();
-    delay(1250);
+    delay(5000);
     return 0; // no errors
 }
 
@@ -414,9 +414,25 @@ void screens::screenSaver(uint8_t diversity_mode, uint8_t channelName, uint16_t 
 }
 
 void screens::updateScreenSaver(uint8_t rssi) {
-    updateScreenSaver(-1, rssi, -1, -1);
+   updateScreenSaver(-1, rssi, -1, -1, '\0');
 }
+
+void screens::updateScreenSaver(uint8_t rssi, const char *volt) {
+    updateScreenSaver(-1, rssi, -1, -1, volt);
+}
+
 void screens::updateScreenSaver(char active_receiver, uint8_t rssi, uint8_t rssiA, uint8_t rssiB) {
+  updateScreenSaver(active_receiver, rssi, rssiA, rssiB, '\0');
+}
+
+void screens::updateScreenSaver(char active_receiver, uint8_t rssi, uint8_t rssiA, uint8_t rssiB, const char *volt) {
+  //dirk
+  if( volt[0] != '\0') {
+    display.setTextSize(1);
+    display.setCursor(70,0);
+    display.print(volt);
+  }
+    // end dirk
 #ifdef USE_DIVERSITY
     if(isDiversity()) {
         // read rssi A
@@ -466,7 +482,7 @@ void screens::updateScreenSaver(char active_receiver, uint8_t rssi, uint8_t rssi
     display.fillRect(25 + rssi_scaled, display.height()-19, (RSSI_BAR_SIZE-rssi_scaled), 19, BLACK);
     display.fillRect(25, display.height()-19, rssi_scaled, 19, WHITE);
 #endif
-    if(rssi < 20)
+    if(rssi < 0)
     {
         display.setTextColor((millis()%250 < 125) ? WHITE : BLACK, BLACK);
         display.setCursor(50,display.height()-13);
@@ -648,7 +664,7 @@ void screens::save(uint8_t mode, uint8_t channelIndex, uint16_t channelFrequency
     uint8_t active_channel = channelIndex%CHANNEL_BAND_SIZE+1; // get channel inside band
     display.print(active_channel,DEC);
     display.setCursor(5,8*4+4);
-    display.print(PSTR2("FREQ:     GHz"));
+    display.print(PSTR2("FREQ:     MHz"));
     display.setCursor(38,8*4+4);
     display.print(channelFrequency);
 

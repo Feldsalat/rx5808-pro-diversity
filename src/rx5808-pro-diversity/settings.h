@@ -40,13 +40,13 @@ SOFTWARE.
 
 // this will be displayed on the screensaver.
 // Up to 10 letters
-#define CALL_SIGN "CALL SIGN"
+#define CALL_SIGN "call_sign"
 
 // Feature Togglels
 #define USE_DIVERSITY
-#define USE_IR_EMITTER
+//#define USE_IR_EMITTER
 //#define USE_FLIP_SCREEN
-#define USE_BOOT_LOGO
+//#define USE_BOOT_LOGO
 
 // Receiver Module version
 // used for tuning time
@@ -76,14 +76,14 @@ SOFTWARE.
     // number of checks a receiver needs to win over the other to switch receivers.
     // this pervents rapid switching.
     // 1 to 10 is a good range. 1 being fast switching, 10 being slow 100ms to switch.
-    #define DIVERSITY_MAX_CHECKS 5
+    #define DIVERSITY_MAX_CHECKS 10
 #endif
 
 // this two are minimum required
-#define buttonUp 2
+#define buttonUp 4
 #define buttonMode 3
 // optional comfort buttons
-#define buttonDown 4
+#define buttonDown 2
 #define buttonSave 5
 // Buzzer
 #define buzzer 6
@@ -119,7 +119,7 @@ SOFTWARE.
 #define STATE_SCREEN_SAVER 8
 
 // Seconds to wait before force entering screensaver
-#define SCREENSAVER_TIMEOUT 30
+#define SCREENSAVER_TIMEOUT 20
 
 #define START_STATE STATE_SEEK
 #define MAX_STATE STATE_MANUAL
@@ -131,7 +131,7 @@ SOFTWARE.
 #ifdef rx5808
     // rx5808 module need >20ms to tune.
     // 25 ms will do a 40 channel scan in 1 second.
-    #define MIN_TUNE_TIME 25
+    #define MIN_TUNE_TIME 30
 #endif
 #ifdef rx5880
     // rx5880 module needs >30ms to tune.

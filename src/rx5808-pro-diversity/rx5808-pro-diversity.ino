@@ -37,6 +37,7 @@ SOFTWARE.
 
 #include "settings.h"
 
+
 // uncomment depending on the display you are using.
 // this is an issue with the arduino preprocessor
 #ifdef TVOUT_SCREENS
@@ -142,9 +143,90 @@ char call_sign[10];
 bool settings_beeps = true;
 bool settings_orderby_channel = true;
 
+// dirk
+
+#define Akku A3 // 
+#define Skalierung 3.73              //je nach Eingangsspannungsteiler errechnen
+float argwenig = 3.5;                // nerviges Gepiepse Grenzwert
+float ganzargwenig = 3.4;            // ganz arg nerviges Gepiepse Grenzwert
+unsigned long previousMillis = 0;    // Speicher
+long interval;                       //  wirkliche Pausenlänge (lange Pause default)
+unsigned long previousMillisD = 0;   // Pausenlänge 
+long intervalD = 4000;               //  Pausenlänge Display
+const long interval1 = 10000;        // Pausenlänge Nervpiep
+const long interval2 = 2000;         // Pausenlänge2 Ultranervpiep
+uint16_t sensorValue;                // da wird der Wert rein gelesen 
+float voltage;                       // Spannung berechnen
+int type;                          // Akku-Typ, Teiler für argwenig und ganzargwenig
+unsigned long currentMillis;
+
+// dirk ende
+  
+
 // SETUP ----------------------------------------------------------------------------
 void setup()
 {
+    // dirk
+    // Akku ganz zu Beginn mal testen, was das für einer ist
+    // Grenzwerte: Typ 2 <8.45 , Typ 3 >8.45 , Typ 4 >12.65
+    sensorValue = analogRead(Akku); 
+    voltage = sensorValue * (5 / 1023.0) * Skalierung;
+    if( voltage > 12.65) { 
+      type = 4.0; 
+    } else { 
+      if( voltage > 8.45) {
+        type = 3.0;
+      } else {
+        type = 2.0;
+      }
+    }
+       pinMode(buzzer, OUTPUT); // Feedback buzzer (active buzzer, not passive piezo)
+ if (voltage > 12.65){
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay (200);
+      digitalWrite(buzzer, HIGH); // aus Piep
+      delay (400);
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay (200);
+      digitalWrite(buzzer, HIGH); // aus Piep
+      delay (400);
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay (200);
+      digitalWrite(buzzer, HIGH); // aus Piep
+      delay (400);
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay (200);
+      digitalWrite(buzzer, HIGH); // aus Piep
+    } else{
+    
+    if (voltage > 8.45){
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay (200);
+      digitalWrite(buzzer, HIGH); // aus Piep
+      delay (400);
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay (200);
+      digitalWrite(buzzer, HIGH); // aus Piep
+      delay (400);
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay (200);
+      digitalWrite(buzzer, HIGH); // aus Piep
+    }
+     else{
+        digitalWrite(buzzer, LOW); // mach Piep
+        delay (200);
+        digitalWrite(buzzer, HIGH); // aus Piep
+        delay (400);
+        digitalWrite(buzzer, LOW); // mach Piep
+        delay (200);
+        digitalWrite(buzzer, HIGH); // aus Piep
+      }
+    }
+      
+  
+ 
+    // end dirk
+    
     // IO INIT
     // initialize digital pin 13 LED as an output.
     pinMode(led, OUTPUT); // status pin for TV mode errors
@@ -156,8 +238,7 @@ void setup()
     pinMode(buttonUp, INPUT);
     digitalWrite(buttonUp, INPUT_PULLUP);
     pinMode(buttonMode, INPUT);
-    digitalWrite(buttonMode, INPUT_PULLUP);
-    // optional control
+    digitalWrite(buttonMode, INPUT_PULLUP); 
     pinMode(buttonDown, INPUT);
     digitalWrite(buttonDown, INPUT_PULLUP);
     pinMode(buttonSave, INPUT);
@@ -260,13 +341,42 @@ void setup()
 }
 
 // LOOP ----------------------------------------------------------------------------
+
 void loop()
+  
+ 
 {
+
+
     /*******************/
     /*   Mode Select   */
     /*******************/
     uint8_t in_menu;
     uint8_t in_menu_time_out;
+
+  // dirk 
+    sensorValue = analogRead(Akku); 
+    // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V)   
+    // Anpassung an den Akku-Typ ( / type), das ist nicht mehr der normale Spannungwert  
+    voltage = ( sensorValue * (5 / 1023.0) * Skalierung ) / type;
+    currentMillis = millis();
+   
+  if (voltage < argwenig) //Akku leer Warnung
+  {
+     // interval2 ist das nervige schnelle piepen, interval1 nervt nur etwas
+    if( voltage > ganzargwenig ) { interval = interval1; } else { interval = interval2; } 
+    
+    if (currentMillis - previousMillis >= interval) {
+      // save the last time you blinked the LED
+      previousMillis = currentMillis;
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay(200);
+      digitalWrite(buzzer, HIGH); // und Pause
+    }
+
+}
+
+// end dirk
 
     if (digitalRead(buttonMode) == LOW) // key pressed ?
     {
@@ -514,21 +624,107 @@ void loop()
     /*   Processing depending of state   */
     /*************************************/
 #ifndef TVOUT_SCREENS
-    if(state == STATE_SCREEN_SAVER) {
+    if(state == STATE_SCREEN_SAVER) 
+   {
+      // dirk
+      boolean neu = false;
+
+     sensorValue = analogRead(Akku); 
+    // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):   
+     voltage = sensorValue * (5 / 1023.0) * Skalierung;
+     // dtostrf(FLOAT,WIDTH,PRECSISION,BUFFER);
+     char myvolt[10];
+     if( voltage < 20) {     
+        dtostrf(voltage,5,2,myvolt);
+     } 
+     
+     if( myvolt[4] == '\0' ) { 
+         myvolt[4] = ' ';
+         myvolt[5] =  'V';
+         myvolt[6] = '\0';
+     } else {
+         myvolt[5] = ' ';
+         myvolt[6] =  'V';
+         myvolt[7] = '\0';
+     }
+
 #ifdef USE_DIVERSITY
-        drawScreen.screenSaver(diversity_mode, pgm_read_byte_near(channelNames + channelIndex), pgm_read_word_near(channelFreqTable + channelIndex), call_sign);
-#else
-        drawScreen.screenSaver(pgm_read_byte_near(channelNames + channelIndex), pgm_read_word_near(channelFreqTable + channelIndex), call_sign);
+          drawScreen.screenSaver(diversity_mode, pgm_read_byte_near(channelNames + channelIndex), pgm_read_word_near(channelFreqTable + channelIndex), myvolt);
+       //drawScreen.screenSaver(diversity_mode, pgm_read_byte_near(channelNames + channelIndex), pgm_read_word_near(channelFreqTable + channelIndex), call_sign);
+#else 
+        // drawScreen.screenSaver(pgm_read_byte_near(channelNames + channelIndex), pgm_read_word_near(channelFreqTable + channelIndex), call_sign);
+        drawScreen.screenSaver(pgm_read_byte_near(channelNames + channelIndex), pgm_read_word_near(channelFreqTable + channelIndex), myvolt );
 #endif
         do{
-            rssi = readRSSI();
+                 
+    sensorValue = analogRead(Akku); 
+    // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):   
+    // ohne Anpassung an Type
+     voltage = sensorValue * (5 / 1023.0) * Skalierung;
+     // dtostrf(FLOAT,WIDTH,PRECSISION,BUFFER);
+     
+    currentMillis = millis();
+
+  if( currentMillis - previousMillisD >= intervalD) {
+      previousMillisD = currentMillis;
+      for( int i=0; i<10; i++) { myvolt[i] = ' '; } 
+     if( voltage < 20) {     
+        dtostrf(voltage,5,2,myvolt);
+     } 
+
+    neu = true;
+     if( myvolt[4] == '\0' ) { 
+         myvolt[4] = ' ';
+         myvolt[5] =  'V';
+         myvolt[6] = '\0';
+     } else {
+         myvolt[5] = ' ';
+         myvolt[6] =  'V';
+         myvolt[7] = '\0';
+     }
+
+    
+  }
+
+  voltage = voltage / type;
+  if (voltage < argwenig) //Akku leer Warnung
+  {
+    // interval2 ist das nervige schnelle piepen, interval1 nervt nur etwas
+    if( voltage > ganzargwenig ) { interval = interval1; } else { interval = interval2; } 
+
+    if (currentMillis - previousMillis >= interval) {
+      // save the last time you blinked the LED
+      previousMillis = currentMillis;
+      digitalWrite(buzzer, LOW); // mach Piep
+      delay(200);
+      digitalWrite(buzzer, HIGH); // und Pause
+      }
+  }
+
+
+// end dirk
+
+
+rssi = readRSSI();
+// dirk
 
 #ifdef USE_DIVERSITY
-            drawScreen.updateScreenSaver(active_receiver, rssi, readRSSI(useReceiverA), readRSSI(useReceiverB));
+        if( neu) {
+          neu = false;
+            drawScreen.updateScreenSaver(active_receiver, rssi, readRSSI(useReceiverA), readRSSI(useReceiverB), myvolt);
+        } else {
+            drawScreen.updateScreenSaver(active_receiver, rssi, readRSSI(useReceiverA), readRSSI(useReceiverB));// das war das Original
+        }
 #else
-            drawScreen.updateScreenSaver(rssi);
-#endif
+        if( neu) {
+          neu = false;
+          drawScreen.updateScreenSaver(rssi, myvolt);
+          } else {
+                    drawScreen.updateScreenSaver(rssi); // das war das Original
 
+          }
+#endif
+// end dirk
         }
         while((digitalRead(buttonMode) == HIGH) && (digitalRead(buttonUp) == HIGH) && (digitalRead(buttonDown) == HIGH)); // wait for next button press
         state=state_last_used;
@@ -1231,3 +1427,6 @@ void SERIAL_ENABLE_HIGH()
   digitalWrite(slaveSelectPin, HIGH);
   delayMicroseconds(1);
 }
+
+
+
